@@ -19,7 +19,7 @@
 ###  along with Logster. If not, see <http://www.gnu.org/licenses/>.
 ###
 
-
+import collections
 from time import time
 
 class MetricObject(object):
@@ -31,6 +31,9 @@ class MetricObject(object):
         self.type = type
         self.timestamp = timestamp
         self.metric_type = metric_type
+
+MetricObjectT = collections.namedtuple('MetricObjectT', 'name value units type timestamp metric_type')
+
 
 class LogsterParser(object):
     """Base class for logster parsers"""

@@ -133,9 +133,17 @@ Additional usage details can be found with the -h option:
       -o OUTPUT, --output=OUTPUT
                             Where to send metrics (can specify multiple times).
                             Choices are statsd, stdout, cloudwatch, graphite,
-                            ganglia, nsca or a fully qualified Python class name
+                            ganglia, nsca, wavefront or a fully qualified Python class name
       -d, --dry-run         Parse the log file but send stats to standard output.
       -D, --debug           Provide more verbose logging for debugging.
+
+
+### Wavefront Output
+
+When outputting to a Wavefront proxy, you must supply additional arguments:
+
+    --wavefront-source=SOURCE    the name of the source/host where these metrics originated
+    --wavefront-proxy=HOST:PORT  the host and port of the Wavefront proxy
 
 
 ## Contributing

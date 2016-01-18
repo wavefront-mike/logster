@@ -144,6 +144,8 @@ cmdline.add_option('--dry-run', '-d', action='store_true', default=False,
                     help='Parse the log file but send stats to standard output.')
 cmdline.add_option('--debug', '-D', action='store_true', default=False,
                     help='Provide more verbose logging for debugging.')
+cmdline.add_option('--ignore-missing-state', '-i', action='store_true', default=False,
+                   help='Ignore missing state file - start at 0')
 options, arguments = parse_args(cmdline)
 
 if options.parser_help:
@@ -294,18 +296,23 @@ def main():
         # ran. Replace the state file if it has gone missing. While we are here,
         # touch the state file to reset the time in case the tailer doesn't
         # find any new lines (and thus won't update the statefile).
-        try:
-            state_file_age = os.stat(state_file)[stat.ST_MTIME]
+        if not options.ignore_missing_state:
+            logger.debug('reading state file age ...')
+            try:
+                state_file_age = os.stat(state_file)[stat.ST_MTIME]
 
-            # Calculate now() - state file age to determine check duration.
-            duration = floor(time()) - floor(state_file_age)
-            logger.debug("Setting duration to %s seconds." % duration)
+                # Calculate now() - state file age to determine check duration.
+                duration = floor(time()) - floor(state_file_age)
+                logger.debug("Setting duration to %s seconds." % duration)
 
-        except OSError as e:
-            logger.info('Writing new state file and exiting. (Was either first run, or state file went missing.)')
-            tailer.create_statefile()
-            end_locking(lockfile, lock_file)
-            sys.exit(0)
+            except OSError as e:
+                logger.info('Writing new state file and exiting. (Was either first run, or state file went missing.)')
+                tailer.create_statefile()
+                end_locking(lockfile, lock_file)
+                sys.exit(0)
+
+        else:
+            duration = 0
 
         # Parse each line from input, then send all stats to their collectors.
         for line in tailer.ireadlines():
@@ -333,7 +340,8 @@ def main():
     # Set mtime and atime for the state file to the startup time of the script
     # so that the cron interval is not thrown off by parsing a large number of
     # log entries.
-    os.utime(state_file, (floor(script_start_time), floor(script_start_time)))
+    if not options.ignore_missing_state:
+        os.utime(state_file, (floor(script_start_time), floor(script_start_time)))
 
     end_locking(lockfile, lock_file)
 
